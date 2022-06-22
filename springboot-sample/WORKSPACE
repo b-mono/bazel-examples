@@ -1,0 +1,93 @@
+workspace(name = "springboot-sample")
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
+
+## 6/21/2022 java
+http_archive(
+    name = "rules_java",
+    sha256 = "8c376f1e4ab7d7d8b1880e4ef8fc170862be91b7c683af97ca2768df546bb073",
+    urls = [
+        "https://mirror.bazel.build/github.com/bazelbuild/rules_java/releases/download/5.0.0/rules_java-5.0.0.tar.gz",
+        "https://github.com/bazelbuild/rules_java/releases/download/5.0.0/rules_java-5.0.0.tar.gz",
+    ],
+)
+
+load("@rules_java//java:repositories.bzl", "rules_java_dependencies", "rules_java_toolchains")
+
+rules_java_dependencies()
+
+rules_java_toolchains()
+
+## 6/21/2022 maven
+RULES_JVM_EXTERNAL_TAG = "4.2"
+
+RULES_JVM_EXTERNAL_SHA = "cd1a77b7b02e8e008439ca76fd34f5b07aecb8c752961f9640dea15e9e5ba1ca"
+
+http_archive(
+    name = "rules_jvm_external",
+    sha256 = RULES_JVM_EXTERNAL_SHA,
+    strip_prefix = "rules_jvm_external-%s" % RULES_JVM_EXTERNAL_TAG,
+    url = "https://github.com/bazelbuild/rules_jvm_external/archive/%s.zip" % RULES_JVM_EXTERNAL_TAG,
+)
+
+## 6/21/2022 grpc-java
+IO_GRPC_GRPC_JAVA_TAG = "1.46.0"
+
+IO_GRPC_GRPC_JAVA_SHA = "2f2ca0701cf23234e512f415318bfeae00036a980f6a83574264f41c0201e5cd"
+
+http_archive(
+    name = "io_grpc_grpc_java",
+    sha256 = IO_GRPC_GRPC_JAVA_SHA,
+    strip_prefix = "grpc-java-%s" % IO_GRPC_GRPC_JAVA_TAG,
+    url = "https://github.com/grpc/grpc-java/archive/v%s.zip" % IO_GRPC_GRPC_JAVA_TAG,
+)
+
+load("@io_grpc_grpc_java//:repositories.bzl", "IO_GRPC_GRPC_JAVA_ARTIFACTS", "IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS", "grpc_java_repositories")
+
+grpc_java_repositories()
+
+load("@com_google_protobuf//:protobuf_deps.bzl", "PROTOBUF_MAVEN_ARTIFACTS", "protobuf_deps")
+
+protobuf_deps()
+
+load("@rules_jvm_external//:repositories.bzl", "rules_jvm_external_deps")
+
+rules_jvm_external_deps()
+
+load("@rules_jvm_external//:setup.bzl", "rules_jvm_external_setup")
+
+rules_jvm_external_setup()
+
+load("@rules_jvm_external//:defs.bzl", "maven_install")
+load("//:maven_dependencies.bzl", "artifacts", "excluded_artifacts")
+load("//:maven_repositories.bzl", maven_repos = "maven_repositories")
+
+maven_install(
+    artifacts = artifacts + IO_GRPC_GRPC_JAVA_ARTIFACTS + PROTOBUF_MAVEN_ARTIFACTS,
+    duplicate_version_warning = "none",
+    maven_install_json = "//:maven_install.json",
+    excluded_artifacts = excluded_artifacts,
+    fetch_javadoc = True,
+    fetch_sources = True,
+    generate_compat_repositories = True,
+    override_targets = IO_GRPC_GRPC_JAVA_OVERRIDE_TARGETS,
+    repositories = maven_repos,
+    version_conflict_policy = "default",
+)
+
+load("@maven//:compat.bzl", "compat_repositories")
+
+compat_repositories()
+
+load("@maven//:defs.bzl", "pinned_maven_install")
+
+pinned_maven_install()
+
+# 6/21/2022 rules_spring
+http_archive(
+    name = "rules_spring",
+    sha256 = "711ff9949bb1cc4dfc34f26114bb2989a2c820a300e536aebea652df1e08292c",
+    urls = [
+        "https://github.com/salesforce/rules_spring/releases/download/2.2.1/rules-spring-2.2.1.zip",
+    ],
+)
